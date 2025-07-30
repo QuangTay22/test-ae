@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vũ Trụ Tình Yêu</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: black;
+      overflow: hidden;
+      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      perspective: 1200px;
+      cursor: grab;
+      color: white;
+    }
+    .scene {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      position: relative;
+    }
+
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      opacity: 0.8;
+      animation: twinkle 2s infinite ease-in-out;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+
+    .heart, .love-text, .floating-img {
+      position: absolute;
+      transform-style: preserve-3d;
+      animation: floatUp 10s linear infinite;
+      opacity: 0.9;
+    }
+
+    .heart {
+      width: 40px;
+      height: 40px;
+      background: none;
+      position: relative;
+      transform: none;
+    }
+
+    .heart svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: drop-shadow(0 0 10px red) drop-shadow(0 0 20px red);
+      transform: translateZ(0);
+    }
+
+    .love-text {
+      font-size: 1.5rem;
+      font-weight: bold;
+      white-space: nowrap;
+      text-shadow: 0 0 10px cyan, 0 0 20px cyan;
+      animation-duration: 10s;
+    }
+
+    .floating-img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 10px;
+      box-shadow: 0 0 10px white;
+      animation-duration: 12s;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translate3d(0, 100vh, -200px) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate3d(0, -150vh, 600px) scale(1.3);
+        opacity: 0;
+      }
+    }
+
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: rgba(0,0,0,0.7);
+      padding: 10px;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+    }
+
+    #controls input, #controls button {
+      margin: 5px 0;
+      display: block;
+      width: 100%;
+    }
+
+    input[type="text"], input[type="file"] {
+      padding: 5px;
+      background: #222;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    button {
+      background: #00ccff;
+      color: white;
+      border: none;
+      padding: 6px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0099cc;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <div><strong>💬 Nhập 5 dòng chữ:</strong></div>
+    <input type="text" id="text1" placeholder="Dòng 1">
+    <input type="text" id="text2" placeholder="Dòng 2">
+    <input type="text" id="text3" placeholder="Dòng 3">
+    <input type="text" id="text4" placeholder="Dòng 4">
+    <input type="text" id="text5" placeholder="Dòng 5">
+    <button onclick="updateTexts()">Cập nhật chữ</button>
+    <button onclick="generateLink()">Tạo link tặng 💌</button>
+
+    <div><strong>🖼️ Chọn ảnh:</strong></div>
+    <input type="file" id="imgUpload" multiple accept="image/*">
+
+    <div><strong>🎵 Chọn file nhạc (.mp3):</strong></div>
+    <input type="file" id="musicInput" accept="audio/*">
+  </div>
+
+  <div class="scene" id="scene"></div>
+  <audio id="bg-music" loop autoplay></audio>
+<script>
+const CLOUD_NAME = "dgypg9p3e";       
+const UPLOAD_PRESET = "public_upload"; 
+
+let uploadedImages = [];
+let uploadedMusic = "";
+
+// Hàm upload file lên Cloudinary
+async function uploadToCloudinary(file) {
+    let formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+
+    // mp3 phải dùng endpoint video/upload
+    let type = file.type.startsWith("audio/") ? "video" : "image";
+    let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${type}/upload`, {
+        method: "POST",
+        body: formData
+    });
+    let data = await res.json();
+    return data.secure_url;
+}
+
+function updateTexts() {
+  texts.length = 0;
+  for (let i = 1; i <= 5; i++) {
+    const val = document.getElementById("text" + i).value;
+    if (val.trim() !== "") texts.push(val);
+  }
+}
+
+async function generateLink() {
+  const params = new URLSearchParams();
+  for (let i = 1; i <= 5; i++) {
+    const val = document.getElementById("text" + i).value.trim();
+    if (val) params.set("text" + i, encodeURIComponent(val));
+  }
+  if (uploadedImages.length > 0) {
+    params.set("imgs", encodeURIComponent(JSON.stringify(uploadedImages)));
+  }
+  if (uploadedMusic) {
+    params.set("music", encodeURIComponent(uploadedMusic));
+  }
+  const newUrl = `${location.origin}${location.pathname.replace('index.html', '')}view.html?${params.toString()}`;
+  prompt("📎 Link chia sẻ nè, copy gửi liền nha:", newUrl);
+}
+
+// Upload ảnh lên Cloudinary
+document.getElementById("imgUpload").addEventListener("change", async function(e) {
+  uploadedImages = [];
+  for (const file of e.target.files) {
+    let url = await uploadToCloudinary(file);
+    uploadedImages.push(url);
+  }
+  alert(`✅ Đã upload ${uploadedImages.length} ảnh lên Cloudinary`);
+});
+
+// Upload nhạc lên Cloudinary
+document.getElementById("musicInput").addEventListener("change", async function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    uploadedMusic = await uploadToCloudinary(file);
+    alert(`🎵 Đã upload nhạc lên Cloudinary`);
+  }
+});
+
+// --- Giữ nguyên toàn bộ phần code tạo sao, trái tim, chữ, ảnh nổi của bà ---
+</script>
+</body>
+<!-- ... giữ nguyên toàn bộ HTML + CSS ở trên ... -->
+</html>
