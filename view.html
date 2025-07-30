@@ -171,49 +171,28 @@ setInterval(() => {
   }
 }, 400);
 
-// Xoay 3D – hỗ trợ chuột + cảm ứng
+// xoay 3D
 let rotateX = 10, rotateY = 0;
 let dragging = false, startX, startY;
-
-function startDrag(x, y) {
+document.body.addEventListener("mousedown", e => {
   dragging = true;
-  startX = x;
-  startY = y;
+  startX = e.clientX; startY = e.clientY;
   document.body.style.cursor = "grabbing";
-}
-
-function moveDrag(x, y) {
+});
+document.body.addEventListener("mouseup", () => {
+  dragging = false;
+  document.body.style.cursor = "grab";
+});
+document.body.addEventListener("mousemove", e => {
   if (!dragging) return;
-  const deltaX = x - startX;
-  const deltaY = y - startY;
+  const deltaX = e.clientX - startX;
+  const deltaY = e.clientY - startY;
   rotateY += deltaX * 0.3;
   rotateX -= deltaY * 0.3;
   rotateX = Math.max(-90, Math.min(90, rotateX));
   scene.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-  startX = x;
-  startY = y;
-}
-
-function endDrag() {
-  dragging = false;
-  document.body.style.cursor = "grab";
-}
-
-// Chuột
-document.body.addEventListener("mousedown", e => startDrag(e.clientX, e.clientY));
-document.body.addEventListener("mousemove", e => moveDrag(e.clientX, e.clientY));
-document.body.addEventListener("mouseup", endDrag);
-
-// Cảm ứng
-document.body.addEventListener("touchstart", e => {
-  const t = e.touches[0];
-  startDrag(t.clientX, t.clientY);
-}, { passive: false }); // Cho phép preventDefault
-
-document.body.addEventListener("touchmove", e => {
-  e.preventDefault(); // Chặn cuộn trang khi kéo
-  const t = e.touches[0];
-  moveDrag(t.clientX, t.clientY);
-}, { passive: false });
-
-document.body.addEventListener("touchend", endDrag, { passive: false });
+  startX = e.clientX; startY = e.clientY;
+});
+</script>
+</body>
+</html>
