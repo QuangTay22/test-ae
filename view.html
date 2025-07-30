@@ -101,12 +101,29 @@ if (params.get("imgs")) {
 }
 
 // nhạc
+// nhạc
 const music = params.get("music");
 if (music) {
   const audio = document.createElement("audio");
   audio.src = decodeURIComponent(music);
-  audio.autoplay = true;
   audio.loop = true;
+  audio.autoplay = true;
+
+  // Nếu autoplay bị chặn thì phát khi người dùng click
+  audio.addEventListener("canplay", () => {
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        console.log("🎵 Autoplay bị chặn — sẽ phát khi người dùng click");
+      });
+    }
+  });
+
+  // Phát nhạc khi người dùng click vào trang (nếu autoplay bị chặn)
+  document.body.addEventListener("click", () => {
+    audio.play();
+  }, { once: true });
+
   document.body.appendChild(audio);
 }
 
